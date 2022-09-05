@@ -150,26 +150,40 @@ jobs:
             echo $BACKEND_PUBLIC_IP >> .circleci/ansible/inventory.txt \
             cat .circleci/ansible/inventory.txt
 
-destroy-environment:
-  description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-  parameters:
-    Workflow_ID:
-      type: string
-      default: ${CIRCLE_WORKFLOW_ID:0:7}
-  steps:
-    - run:
-        name: Destroy environments
-        when: on_fail
-        command: |
-          # Empty frontend bucket
-          aws s3 rm s3://udapeople-<<parameters.Workflow_ID>> --recursive
 
-          # Delete frontend stack
-          aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.Workflow_ID >>
-
-          # Delete backend stack
-          aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.Workflow_ID >>
-
+  configure-infrastructure:
+      docker:
+        - image: cimg/python:3.10
+      steps:
+        - checkout
+        - add_ssh_keys:
+            fingerprints: ["5c:60:34:7a:7f:7d:fd:02:6f:8f:a9:71:24:bc:c6:a3"]
+        - run:
+           name: Install dependencies
+           command: |
+             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+             unzip awscliv2.zip
+             sudo ./aws/install
+             python3 -m pip install --user ansible
+        - attach_workspace:
+            at: ~/
+        - run:
+            name: Configure server
+            command: |
+              # add environment variables to server
+              echo ENVIRONMENT=production > backend/.env
+              echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> backend/.env
+              echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> backend/.env
+              echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> backend/.env
+              echo TYPEORM_HOST=$TYPEORM_HOST >> backend/.env
+              echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> backend/.env
+              echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> backend/.env
+              echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> backend/.env
+              echo TYPEORM_PORT=$TYPEORM_PORT >> backend/.env
+              echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> backend/.env
+              cat backend/.env
+              cd .circleci/ansible
+              ansible-playbook -i inventory.txt configure-server.yml
 
 workflows:
   default:
@@ -189,3 +203,5 @@ workflows:
           filters:
             branches:
               only: [master]    
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
