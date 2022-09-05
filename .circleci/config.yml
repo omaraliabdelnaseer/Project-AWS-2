@@ -153,11 +153,15 @@ jobs:
 
   configure-infrastructure:
       docker:
-        - image: cimg/python:3.10
+        - image: python:3.7-alpine3.1
       steps:
         - checkout
         - add_ssh_keys:
             fingerprints: ["5c:60:34:7a:7f:7d:fd:02:6f:8f:a9:71:24:bc:c6:a3"]
+        - run:
+           name: Install dependencies
+           command: |
+             apk add --update --no-cache tar gzip ansible aws-cli
         - attach_workspace:
             at: ~/
         - run:
@@ -177,10 +181,6 @@ jobs:
               cat backend/.env
               cd .circleci/ansible
               ansible-playbook -i inventory.txt configure-server.yml
-        - persist_to_workspace:
-            root: ~/
-            paths:
-             - project/backend
 
 workflows:
   default:
