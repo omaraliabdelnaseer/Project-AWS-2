@@ -181,7 +181,7 @@ jobs:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
   configure-infrastructure:
       docker:
-        - image: python:3.9.0-alpine
+        - image: cimg/python:3.10
       steps:
         - checkout
         - add_ssh_keys:
@@ -189,17 +189,11 @@ jobs:
               - '5c:60:34:7a:7f:7d:fd:02:6f:8f:a9:71:24:bc:c6:a3'
         - run:
             name: Install dependencies
-            working_directory: ./.circleci/ansible
             command: |
-              apk add --update ansible
-              ansible --version
-      #  - run:
-       #    name: Install dependencies
-      #     command: |
-       #      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-       #      unzip awscliv2.zip
-       #      sudo ./aws/install
-       #      python3 -m pip install --user ansible
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              sudo ./aws/install
+              python3 -m pip install --user ansible
        # - run:
        #    name: Install Node.js 13
        #    command: |
