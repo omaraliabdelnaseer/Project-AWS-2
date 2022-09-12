@@ -31,7 +31,7 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            cd ~/project/backend
+            cd  backend
             npm install
             npm run build
             npm run migrations:revert
@@ -311,8 +311,8 @@ jobs:
             cd .circleci/ansible
             echo "Contents of the inventory.txt file is ------$(cat inventory.txt)"
             ansible-playbook -i inventory.txt deploy-backend.yml
-      - destroy-environment:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      #- destroy-environment:
+      #    workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
