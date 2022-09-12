@@ -1,6 +1,6 @@
 ---
 - name: "Creates backend app directory"
-  file:
+    file:
     path: ~/backend-app
     state: directory
 
@@ -8,6 +8,8 @@
   unarchive:
     src: artifact.tar.gz
     dest: ~/backend-app
+    remote_src: yes
+
 
 - name: "Installing Node Dependencies"
   shell: |
