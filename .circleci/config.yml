@@ -285,7 +285,6 @@ jobs:
       - add_ssh_keys:
             fingerprints: 
               - '5c:60:34:7a:7f:7d:fd:02:6f:8f:a9:71:24:bc:c6:a3'
-      
       - run:
           name: Install dependencies
           command: |
@@ -294,6 +293,17 @@ jobs:
             ansible --version
             pip install awscli
             aws --version
+            
+      - run:
+          name: Package Backend
+          command: |
+             cd backend
+             npm install
+             npm run build
+             tar -czf artifact.tar.gz dist/* package*
+
+             cd ..
+             cp backend/artifact.tar.gz .circleci/ansible/roles/deploy/files
       - restore_cache:
           keys: [backend-build]
       - attach_workspace:
@@ -301,15 +311,12 @@ jobs:
       - run:
           name: Deploy backend
           command: |
-            cd backend
-            npm install
-            npm run build
-            cd ..
-            tar -C backend -czvf artifact.tar.gz .
-            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
-            mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
+            export TYPEORM_MIGRATIONS_DIR=./migrations
+            export TYPEORM_ENTITIES=./modules/domain/**/*.entity{.ts,.js}
+            export TYPEORM_MIGRATIONS=./migrations/*.ts
+
             cd .circleci/ansible
-            echo "Contents of the inventory.txt file is ------$(cat inventory.txt)"
+            cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
       #- destroy-environment:
       #    workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
