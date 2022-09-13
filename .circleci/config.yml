@@ -288,11 +288,12 @@ jobs:
       - image: cimg/python:3.10
     steps:
       - checkout
-      - restore_cache:
-          keys: [backend-build]
       - add_ssh_keys:
             fingerprints: 
               - '5c:60:34:7a:7f:7d:fd:02:6f:8f:a9:71:24:bc:c6:a3'
+
+      - restore_cache:
+          keys: [backend-build]     
       - attach_workspace:
           at: ~/
       - run:
