@@ -214,6 +214,12 @@ jobs:
               cd .circleci/ansible
               cat  inventory.txt
               ansible-playbook -i inventory.txt configure-server.yml
+        - persist_to_workspace:
+            root: ~/
+            paths:
+              - project/backend
+        - destroy-environment:
+            workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
   run-migrations:
       docker:
         - image: circleci/node:13.8.0 # safest to use to avoid migration errors
@@ -301,12 +307,6 @@ jobs:
             sudo npm install -g n
             sudo n 13.8.0
       - run:
-          name: Install dependencies
-          command: |
-            cd backend
-            npm install
-            
-      - run:
           name: Package Backend
           command: |
              cd backend
@@ -316,8 +316,8 @@ jobs:
 
              cd ..
              tar -C backend -czvf artifact.tar.gz .
-              mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
-              mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz      
+             mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+             mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz      
       - run:
           name: Deploy backend
           command: |
