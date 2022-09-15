@@ -214,6 +214,12 @@ jobs:
               cd .circleci/ansible
               cat  inventory.txt
               ansible-playbook -i inventory.txt configure-server.yml
+        - persist_to_workspace:
+            root: ~/
+            paths:
+              - project/backend
+        - destroy-environment:
+            workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
   run-migrations:
       docker:
         - image: circleci/node:13.8.0 # safest to use to avoid migration errors
@@ -282,11 +288,12 @@ jobs:
       - image: cimg/python:3.10
     steps:
       - checkout
-      - restore_cache:
-          keys: [backend-build]
       - add_ssh_keys:
             fingerprints: 
               - '5c:60:34:7a:7f:7d:fd:02:6f:8f:a9:71:24:bc:c6:a3'
+
+      - restore_cache:
+          keys: [backend-build]     
       - attach_workspace:
           at: ~/
       - run:
@@ -301,12 +308,6 @@ jobs:
             sudo npm install -g n
             sudo n 13.8.0
       - run:
-          name: Install dependencies
-          command: |
-            cd backend
-            npm install
-            
-      - run:
           name: Package Backend
           command: |
              cd backend
@@ -316,8 +317,8 @@ jobs:
 
              cd ..
              tar -C backend -czvf artifact.tar.gz .
-              mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
-              mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz      
+             mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+             mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz      
       - run:
           name: Deploy backend
           command: |
@@ -363,7 +364,7 @@ jobs:
             if
              curl ${URL} | grep "Welcome"; then return 0; else return 1; fi
       - destroy-environment:
-         workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
@@ -469,7 +470,7 @@ workflows:
           requires: [run-migrations]
       - smoke-test:
           requires: [deploy-backend, deploy-frontend]
-      # - cloudfront-update:
-      #    requires: [smoke-test]
+      - cloudfront-update:
+          requires: [smoke-test]
       #- cleanup:
       #    requires: [cloudfront-update]
